@@ -48,7 +48,7 @@ def create_todo(todo: TodoItem):
     return todo
 
 
-# To-Do 항목 수정
+# To-Do 항목 수정 (완료 여부 수정 포함)
 @app.put("/todos/{todo_id}", response_model=TodoItem)
 def update_todo(todo_id: int, updated_todo: TodoItem):
     todos = load_todos()
@@ -72,6 +72,6 @@ def delete_todo(todo_id: int):
 # HTML 파일 서빙
 @app.get("/", response_class=HTMLResponse)
 def read_root():
-    with open("templates/index.html", "r") as file:
+    with open("templates/index.html", "r", encoding="utf-8") as file:
         content = file.read()
     return HTMLResponse(content=content)

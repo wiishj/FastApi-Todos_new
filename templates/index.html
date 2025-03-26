@@ -21,7 +21,12 @@
         todoList.innerHTML = "";
         todos.forEach((todo) => {
           const li = document.createElement("li");
-          li.innerHTML = `${todo.title}: ${todo.description} `;
+          li.innerHTML = `
+            <input type="checkbox" ${
+              todo.completed ? "checked" : ""
+            } onchange="toggleCompleted(${todo.id}, this)" />
+            ${todo.title}: ${todo.description} (completed: ${todo.completed})
+          `;
 
           const editButton = document.createElement("button");
           editButton.textContent = "Edit";
@@ -76,6 +81,24 @@
 
       async function deleteTodo(id) {
         await fetch(`/todos/${id}`, { method: "DELETE" });
+        fetchTodos();
+      }
+
+      async function toggleCompleted(id, checkbox) {
+        const todos = await fetch("/todos");
+        const todosData = await todos.json();
+        const todo = todosData.find((item) => item.id === id);
+
+        const updatedTodo = {
+          ...todo, // 기존 todo 데이터 가져오기
+          completed: checkbox.checked, // 완료 상태만 갱신
+        };
+
+        await fetch(`/todos/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updatedTodo), // 수정된 todo 데이터를 보내기
+        });
         fetchTodos();
       }
 
