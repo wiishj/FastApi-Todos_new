@@ -7,4 +7,4 @@ services:
       dockerfile: Dockerfile      # Dockerfile 이름 (생략 가능, 기본값은 'Dockerfile')
     container_name: FastApi-app
     ports:
-      - "5001:5001" #호스트 시스템의 포트번호:컨테이너 내부 포트번호
+      - "5001:5002" #호스트 시스템의 포트번호:컨테이너 내부 포트번호
