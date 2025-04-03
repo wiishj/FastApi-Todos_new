@@ -4,41 +4,139 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>To-Do List</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f8f9fa;
+        text-align: center;
+        padding: 20px;
+      }
+      h1 {
+        color: #343a40;
+      }
+      form {
+        margin-bottom: 20px;
+      }
+      input {
+        padding: 10px;
+        margin: 5px;
+        border: 1px solid #ced4da;
+        border-radius: 5px;
+        width: 250px;
+      }
+      button {
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        background-color: #007bff;
+        color: white;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      ul {
+        list-style: none;
+        padding: 0;
+      }
+      .todo-container {
+        display: flex;
+        justify-content: space-around;
+      }
+      .todo-section {
+        width: 45%;
+        text-align: left;
+      }
+      .todo-section h2 {
+        text-align: center;
+        color: #343a40;
+      }
+      li {
+        background: white;
+        margin: 10px auto;
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        max-width: 400px;
+        display: flex;
+        flex-direction: column;
+      }
+      .completed {
+        text-decoration: line-through;
+        color: gray;
+      }
+      .actions {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+      }
+      .actions button {
+        width: 80px;
+        padding: 8px;
+        text-align: center;
+        font-size: 13px;
+        border-radius: 5px;
+        margin: 2px;
+      }
+    </style>
   </head>
   <body>
     <h1>To-Do List</h1>
-    <ul id="todo-list"></ul>
     <form id="todo-form">
       <input type="text" id="title" placeholder="Title" required />
       <input type="text" id="description" placeholder="Description" required />
+      <input type="datetime-local" id="deadline" required />
       <button type="submit">Add To-Do</button>
     </form>
+
+    <div class="todo-container">
+      <div class="todo-section">
+        <h2>📌 미완료</h2>
+        <ul id="pending-todo-list"></ul>
+      </div>
+      <div class="todo-section">
+        <h2>✅ 완료</h2>
+        <ul id="completed-todo-list"></ul>
+      </div>
+    </div>
+
     <script>
       async function fetchTodos() {
         const response = await fetch("/todos");
         const todos = await response.json();
-        const todoList = document.getElementById("todo-list");
-        todoList.innerHTML = "";
+        const pendingList = document.getElementById("pending-todo-list");
+        const completedList = document.getElementById("completed-todo-list");
+
+        pendingList.innerHTML = "";
+        completedList.innerHTML = "";
+
         todos.forEach((todo) => {
           const li = document.createElement("li");
+          li.className = todo.completed ? "completed" : "";
+          const deadlineDate = todo.deadline ? new Date(todo.deadline) : null;
+          const deadlineText =
+            deadlineDate && !isNaN(deadlineDate)
+              ? `🕒 마감: ${deadlineDate.toLocaleString()}`
+              : "📌 마감기한 없음";
+
           li.innerHTML = `
-            <input type="checkbox" ${
-              todo.completed ? "checked" : ""
-            } onchange="toggleCompleted(${todo.id}, this)" />
-            ${todo.title}: ${todo.description} (completed: ${todo.completed})
+            <span>${todo.title}: ${todo.description}</span>
+            <small>${deadlineText}</small>
+            <div class="actions">
+              <button onclick="toggleCompleted(${todo.id})">
+                ${todo.completed ? "⏪ 되돌리기" : "✅ 완료"}
+              </button>
+              <button onclick="editTodo(${todo.id})">✏️ 수정</button>
+              <button onclick="deleteTodo(${todo.id})">❌ 삭제</button>
+            </div>
           `;
 
-          const editButton = document.createElement("button");
-          editButton.textContent = "Edit";
-          editButton.onclick = () => editTodo(todo);
-
-          const deleteButton = document.createElement("button");
-          deleteButton.textContent = "Delete";
-          deleteButton.onclick = () => deleteTodo(todo.id);
-
-          li.appendChild(editButton);
-          li.appendChild(deleteButton);
-          todoList.appendChild(li);
+          if (todo.completed) {
+            completedList.appendChild(li);
+          } else {
+            pendingList.appendChild(li);
+          }
         });
       }
 
@@ -48,6 +146,9 @@
           event.preventDefault();
           const title = document.getElementById("title").value;
           const description = document.getElementById("description").value;
+          const deadlineInput = document.getElementById("deadline").value;
+
+          let deadline = deadlineInput ? deadlineInput.split("T")[0] : null;
 
           await fetch("/todos", {
             method: "POST",
@@ -56,26 +157,45 @@
               id: Date.now(),
               title,
               description,
+              deadline,
               completed: false,
             }),
           });
+
           fetchTodos();
         });
 
-      async function editTodo(todo) {
-        const newTitle = prompt("Edit Title:", todo.title);
-        const newDescription = prompt("Edit Description:", todo.description);
-        if (newTitle && newDescription) {
-          await fetch(`/todos/${todo.id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              ...todo,
-              title: newTitle,
-              description: newDescription,
-            }),
-          });
+      async function editTodo(id) {
+        const existingTodo = await fetch(`/todos/${id}`).then((res) =>
+          res.json()
+        );
+        const newTitle = prompt("Edit Title (Leave blank to keep the same):");
+        const newDescription = prompt(
+          "Edit Description (Leave blank to keep the same):"
+        );
+        const newDeadline = prompt(
+          "Edit Deadline (YYYY-MM-DD) (Leave blank to keep the same):"
+        );
+
+        if (newDeadline.includes("T")) {
+          newDeadline = newDeadline.split("T")[0];
+        }
+        const response = await fetch(`/todos/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: id,
+            title: newTitle || existingTodo.title,
+            description: newDescription || existingTodo.description,
+            deadline: newDeadline || existingTodo.deadline,
+            completed: existingTodo.completed,
+          }),
+        });
+
+        if (response.ok) {
           fetchTodos();
+        } else {
+          console.error("Failed to update todo:", await response.text());
         }
       }
 
@@ -84,21 +204,10 @@
         fetchTodos();
       }
 
-      async function toggleCompleted(id, checkbox) {
-        const todos = await fetch("/todos");
-        const todosData = await todos.json();
-        const todo = todosData.find((item) => item.id === id);
-
-        const updatedTodo = {
-          ...todo, // 기존 todo 데이터 가져오기
-          completed: checkbox.checked, // 완료 상태만 갱신
-        };
-
-        await fetch(`/todos/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updatedTodo), // 수정된 todo 데이터를 보내기
-        });
+      async function toggleCompleted(id) {
+        const response = await fetch(`/todos/${id}`);
+        const todo = await response.json();
+        await fetch(`/todos/${id}/toggle`, { method: "PATCH" });
         fetchTodos();
       }
 
