@@ -86,7 +86,7 @@
     <form id="todo-form">
       <input type="text" id="title" placeholder="Title" required />
       <input type="text" id="description" placeholder="Description" required />
-      <input type="datetime-local" id="deadline" required />
+      <input type="date" id="deadline" required />
       <button type="submit">Add To-Do</button>
     </form>
 
@@ -117,7 +117,7 @@
           const deadlineDate = todo.deadline ? new Date(todo.deadline) : null;
           const deadlineText =
             deadlineDate && !isNaN(deadlineDate)
-              ? `🕒 마감: ${deadlineDate.toLocaleString()}`
+              ? `🕒 마감: ${deadlineDate.toLocaleDateString()}`
               : "📌 마감기한 없음";
 
           li.innerHTML = `
