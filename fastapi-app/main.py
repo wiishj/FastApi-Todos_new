@@ -3,11 +3,17 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
+from enum import Enum
 import json
 import os
 
 app = FastAPI()
 
+class Category(str, Enum):
+    workout = "운동"
+    appointment = "약속"
+    study = "공부"
+    schedule = "일정"
 
 # To-Do 항목 모델
 class TodoItem(BaseModel):
@@ -16,6 +22,7 @@ class TodoItem(BaseModel):
     description: Optional[str] = None
     deadline: Optional[str] = None  # str로 변경
     completed: bool
+    category: Optional[str]=None
 
 
 # JSON 파일 경로

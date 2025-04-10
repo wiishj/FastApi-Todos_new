@@ -1,93 +1,125 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>To-Do List</title>
     <style>
       body {
-        font-family: Arial, sans-serif;
-        background-color: #f8f9fa;
-        text-align: center;
-        padding: 20px;
+        font-family: "Noto Sans KR", sans-serif;
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 1rem;
+        background-color: #f1ecea;
       }
+
       h1 {
-        color: #343a40;
+        text-align: center;
+        color: #333;
       }
+
       form {
-        margin-bottom: 20px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
       }
-      input {
-        padding: 10px;
-        margin: 5px;
-        border: 1px solid #ced4da;
-        border-radius: 5px;
-        width: 250px;
+
+      input,
+      select {
+        padding: 0.5rem;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        flex: 1 1 auto;
       }
-      button {
-        padding: 10px 15px;
+
+      .add {
+        padding: 0.6rem 1rem;
+        margin-top: 1rem;
         border: none;
-        border-radius: 5px;
-        background-color: #007bff;
+        border-radius: 8px;
+        background-color: #473f3e;
         color: white;
         cursor: pointer;
-        font-size: 14px;
       }
-      button:hover {
-        background-color: #0056b3;
+
+      .actions button {
+        background-color: transparent;
+        border: none;
+        font-size: 1.3rem;
+        cursor: pointer;
       }
+
+      .todo-container {
+        display: flex;
+        gap: 2rem;
+      }
+
+      .todo-section {
+        flex: 1;
+        background-color: #f1ecea;
+        padding: 1rem;
+        border-radius: 10px;
+      }
+
       ul {
         list-style: none;
         padding: 0;
       }
-      .todo-container {
-        display: flex;
-        justify-content: space-around;
-      }
-      .todo-section {
-        width: 45%;
-        text-align: left;
-      }
-      .todo-section h2 {
-        text-align: center;
-        color: #343a40;
-      }
+
       li {
-        background: white;
-        margin: 10px auto;
-        padding: 15px;
-        border-radius: 5px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        max-width: 400px;
-        display: flex;
-        flex-direction: column;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        border-radius: 10px;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
       }
-      .completed {
-        text-decoration: line-through;
-        color: gray;
+      li span {
+        color: #473f3e;
       }
+
       .actions {
         display: flex;
-        justify-content: space-between;
-        margin-top: 10px;
+        justify-content: center;
+        gap: 5rem;
+        margin-top: 0.5rem;
       }
-      .actions button {
-        width: 80px;
-        padding: 8px;
-        text-align: center;
-        font-size: 13px;
-        border-radius: 5px;
-        margin: 2px;
+
+      /* 카테고리 색상 */
+      .운동 {
+        background-color: #ffa98a;
+      }
+
+      .약속 {
+        background-color: #ffcc80;
+      }
+
+      .공부 {
+        background-color: #abcdde;
+      }
+
+      .일정 {
+        background-color: #dbe098;
+      }
+
+      small {
+        display: block;
+        margin-top: 0.3rem;
+        color: #666;
       }
     </style>
   </head>
   <body>
     <h1>To-Do List</h1>
     <form id="todo-form">
-      <input type="text" id="title" placeholder="Title" required />
-      <input type="text" id="description" placeholder="Description" required />
+      <input type="text" id="title" placeholder="제목" required />
+      <input type="text" id="description" placeholder="설명" required />
       <input type="date" id="deadline" required />
-      <button type="submit">Add To-Do</button>
+      <select id="category" required>
+        <option value="운동">운동</option>
+        <option value="약속">약속</option>
+        <option value="공부">공부</option>
+        <option value="일정">일정</option>
+      </select>
+      <button class="add" type="submit">Add To-Do</button>
     </form>
 
     <div class="todo-container">
@@ -96,7 +128,7 @@
         <ul id="pending-todo-list"></ul>
       </div>
       <div class="todo-section">
-        <h2>✅ 완료</h2>
+        <h2>✅완료</h2>
         <ul id="completed-todo-list"></ul>
       </div>
     </div>
@@ -113,30 +145,27 @@
 
         todos.forEach((todo) => {
           const li = document.createElement("li");
-          li.className = todo.completed ? "completed" : "";
+          li.className = `${todo.category}`;
           const deadlineDate = todo.deadline ? new Date(todo.deadline) : null;
           const deadlineText =
             deadlineDate && !isNaN(deadlineDate)
               ? `🕒 마감: ${deadlineDate.toLocaleDateString()}`
               : "📌 마감기한 없음";
 
-          li.innerHTML = `
+          li.innerHTML = ` 
+            <span>${todo.category}</span>
             <span>${todo.title}: ${todo.description}</span>
             <small>${deadlineText}</small>
             <div class="actions">
               <button onclick="toggleCompleted(${todo.id})">
-                ${todo.completed ? "⏪ 되돌리기" : "✅ 완료"}
+                ${todo.completed ? "⏪" : "✅"}
               </button>
-              <button onclick="editTodo(${todo.id})">✏️ 수정</button>
-              <button onclick="deleteTodo(${todo.id})">❌ 삭제</button>
+              <button onclick="editTodo(${todo.id})">✏️</button>
+              <button onclick="deleteTodo(${todo.id})">❌</button>
             </div>
           `;
 
-          if (todo.completed) {
-            completedList.appendChild(li);
-          } else {
-            pendingList.appendChild(li);
-          }
+          (todo.completed ? completedList : pendingList).appendChild(li);
         });
       }
 
@@ -147,8 +176,9 @@
           const title = document.getElementById("title").value;
           const description = document.getElementById("description").value;
           const deadlineInput = document.getElementById("deadline").value;
+          const category = document.getElementById("category").value;
 
-          let deadline = deadlineInput ? deadlineInput.split("T")[0] : null;
+          const deadline = deadlineInput ? deadlineInput.split("T")[0] : null;
 
           await fetch("/todos", {
             method: "POST",
@@ -159,6 +189,7 @@
               description,
               deadline,
               completed: false,
+              category,
             }),
           });
 
@@ -169,25 +200,34 @@
         const existingTodo = await fetch(`/todos/${id}`).then((res) =>
           res.json()
         );
-        const newTitle = prompt("Edit Title (Leave blank to keep the same):");
-        const newDescription = prompt(
-          "Edit Description (Leave blank to keep the same):"
+
+        const newCategory = prompt(
+          "Edit Category (운동, 약속, 공부, 일정):",
+          existingTodo.category
         );
-        const newDeadline = prompt(
-          "Edit Deadline (YYYY-MM-DD) (Leave blank to keep the same):"
+        const newTitle = prompt("Edit Title:", existingTodo.title);
+        const newDescription = prompt(
+          "Edit Description:",
+          existingTodo.description
+        );
+        let newDeadline = prompt(
+          "Edit Deadline (YYYY-MM-DD):",
+          existingTodo.deadline
         );
 
-        if (newDeadline.includes("T")) {
+        if (newDeadline && newDeadline.includes("T")) {
           newDeadline = newDeadline.split("T")[0];
         }
+
         const response = await fetch(`/todos/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            id: id,
+            id,
             title: newTitle || existingTodo.title,
             description: newDescription || existingTodo.description,
             deadline: newDeadline || existingTodo.deadline,
+            category: newCategory || existingTodo.category,
             completed: existingTodo.completed,
           }),
         });
@@ -195,7 +235,7 @@
         if (response.ok) {
           fetchTodos();
         } else {
-          console.error("Failed to update todo:", await response.text());
+          console.error("수정 실패:", await response.text());
         }
       }
 
@@ -205,8 +245,6 @@
       }
 
       async function toggleCompleted(id) {
-        const response = await fetch(`/todos/${id}`);
-        const todo = await response.json();
         await fetch(`/todos/${id}/toggle`, { method: "PATCH" });
         fetchTodos();
       }
