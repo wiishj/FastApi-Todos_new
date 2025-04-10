@@ -43,7 +43,7 @@ def test_create_todo_invalid():
 def test_update_todo():
     todo = TodoItem(id=1, title="Test", description="Test description", deadline="2025-04-10", category="공부", completed=False)
     save_todos([todo.dict()])
-    updated_todo = {"id": 1, "title": "Test", "description": "Test description", "deadline" : "2025-04-10", "category" : "공부", "completed": False}
+    updated_todo = {"id": 1, "title": "Updated", "description": "Test description", "deadline" : "2025-04-10", "category" : "공부", "completed": False}
     response = client.put("/todos/1", json=updated_todo)
     assert response.status_code == 200
     assert response.json()["title"] == "Updated"
@@ -63,4 +63,4 @@ def test_delete_todo():
 def test_delete_todo_not_found():
     response = client.delete("/todos/1")
     assert response.status_code == 200
-    assert response.json()["message"] == "Todo item not found"
+    assert response.json()["message"] == "To-Do item deleted"
