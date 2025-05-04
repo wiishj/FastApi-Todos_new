@@ -9,12 +9,13 @@ services:
     ports:
       - "5001:5001" #호스트 시스템의 포트번호:컨테이너 내부 포트번호
 
-sonarqube:
+  sonarqube:
     image: sonarqube:latest
     container_name: sonarqube
     ports:
       - "9000:9000"
     environment:
+      - SONAR_SEARCH_JAVAOPTS=-Xms512m -Xmx512m
       - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true  # 메모리 제한 환경에서 유용한 옵션
     volumes:
       - sonarqube_conf:/opt/sonarqube/conf
