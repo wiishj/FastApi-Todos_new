@@ -15,7 +15,6 @@ services:
     ports:
       - "9000:9000"
     environment:
-      SONAR_SEARCH_PORT:: "8999"
       SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"  # 메모리 제한 환경에서 유용한 옵션
     volumes:
       - sonarqube_conf:/opt/sonarqube/conf
