@@ -16,6 +16,7 @@ services:
       - "9000:9000"
     environment:
       SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"  # 메모리 제한 환경에서 유용한 옵션
+      SOnar_SEARCH_HTTP_TIMEOUT_MS : "120000"
     volumes:
       - sonarqube_conf:/opt/sonarqube/conf
       - sonarqube_data:/opt/sonarqube/data
