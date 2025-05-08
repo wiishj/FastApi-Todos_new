@@ -64,6 +64,7 @@
       ul {
         list-style: none;
         padding: 0;
+        min-height: 50px;
       }
 
       li {
@@ -105,6 +106,9 @@
         margin-top: 0.3rem;
         color: #666;
       }
+      .dragging-over{
+        background-color: #e0e0e0;
+      }
     </style>
   </head>
   <body>
@@ -125,11 +129,21 @@
     <div class="todo-container">
       <div class="todo-section">
         <h2>📌 미완료</h2>
-        <ul id="pending-todo-list"></ul>
+        <ul
+          id="pending-todo-list"
+          ondragover="allowDrop(event)"
+          ondragleave="resetDropStyle(event)"
+          ondrop="drop(event, false)"
+        ></ul>
       </div>
       <div class="todo-section">
-        <h2>✅완료</h2>
-        <ul id="completed-todo-list"></ul>
+        <h2>✅ 완료</h2>
+        <ul
+          id="completed-todo-list"
+          ondragover="allowDrop(event)"
+          ondragleave="resetDropStyle(event)"
+          ondrop="drop(event, true)"
+        ></ul>
       </div>
     </div>
 
@@ -146,13 +160,18 @@
         todos.forEach((todo) => {
           const li = document.createElement("li");
           li.className = `${todo.category}`;
-          const deadlineDate = todo.deadline ? new Date(todo.deadline) : null;
+          li.setAttribute("draggable", true); // 드래그 가능
+          li.setAttribute("ondragstart", `drag(event, ${todo.id})`); // 드래그 시작 이벤트
+
+          const deadlineDate = todo.deadline
+            ? new Date(todo.deadline)
+            : null;
           const deadlineText =
             deadlineDate && !isNaN(deadlineDate)
               ? `🕒 마감: ${deadlineDate.toLocaleDateString()}`
               : "📌 마감기한 없음";
 
-          li.innerHTML = ` 
+          li.innerHTML = `
             <span>${todo.category}</span>
             <span>${todo.title}: ${todo.description}</span>
             <small>${deadlineText}</small>
@@ -167,6 +186,39 @@
 
           (todo.completed ? completedList : pendingList).appendChild(li);
         });
+      }
+
+      function drag(event, id) {
+        event.dataTransfer.setData("todoId", id);
+      }
+
+      function allowDrop(event) {
+        event.preventDefault();
+        const section = event.target.closest(".todo-section");
+
+        // 드래그 중인 리스트 전체 강조
+        if (section) {
+          section.classList.add("dragging-over");
+        }
+      }
+
+      function resetDropStyle(event) {
+        const section = event.target.closest(".todo-section");
+
+        // 강조 색상 초기화
+        if (section) {
+          section.classList.remove("dragging-over");
+        }
+      }
+
+      async function drop(event, completed) {
+        event.preventDefault();
+        const target = event.target.closest("ul"); // 드롭 가능한 영역 확인
+        if (!target) return;
+        const todoId = event.dataTransfer.getData("todoId");
+
+        await fetch(`/todos/${todoId}/toggle`, { method: "PATCH" });
+        fetchTodos(); //list load
       }
 
       document

@@ -1,13 +1,5 @@
 [
      {
-          "id": 1744264493088,
-          "title": "ㄱ",
-          "description": "ㄱ",
-          "deadline": "2025-04-10",
-          "completed": true,
-          "category": "운동"
-     },
-     {
           "id": 1744267454801,
           "title": "ㅇ",
           "description": "ㅇ",
@@ -20,7 +12,7 @@
           "title": "ㅇ",
           "description": "ㅇ",
           "deadline": "2025-04-07",
-          "completed": false,
+          "completed": true,
           "category": "약속"
      },
      {
@@ -28,7 +20,7 @@
           "title": "ㅇ",
           "description": "ㅇ",
           "deadline": "2025-04-07",
-          "completed": false,
+          "completed": true,
           "category": "일정"
      }
 ]
