@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile      # Dockerfile 이름 (생략 가능, 기본값은 'Dockerfile')
     container_name: FastApi-app
     ports:
-      - "5001:5001" #호스트 시스템의 포트번호:컨테이너 내부 포트번호
+      - "5001:5001"
 
   sonarqube:
     image: sonarqube:latest
@@ -15,22 +15,14 @@ services:
     ports:
       - "9000:9000"
     environment:
-      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"  # 메모리 제한 환경에서 유용한 옵션
-      SOnar_SEARCH_HTTP_TIMEOUT_MS : "120000"
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true  # 메모리 제한 환경에서 유용한 옵션
     volumes:
       - sonarqube_conf:/opt/sonarqube/conf
       - sonarqube_data:/opt/sonarqube/data
       - sonarqube_logs:/opt/sonarqube/logs
       - sonarqube_extensions:/opt/sonarqube/extensions
-      
-volumes:
-  sonarqube_conf:
-  sonarqube_data:
-  sonarqube_logs:
-  sonarqube_extensions:
-  granfana-data:
 
-prometheus:
+  prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
     volumes:
@@ -40,7 +32,7 @@ prometheus:
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
 
-grafana:
+  grafana:
     image: grafana/grafana:latest
     container_name: grafana
     ports:
@@ -50,8 +42,15 @@ grafana:
     volumes:
       - grafana-data:/var/lib/grafana
 
-node-exporter:
+  node-exporter:
     image: prom/node-exporter:latest
     container_name: node-exporter
     ports:
       - "9100:9100"
+
+volumes:
+  sonarqube_conf:
+  sonarqube_data:
+  sonarqube_logs:
+  sonarqube_extensions:
+  grafana-data:

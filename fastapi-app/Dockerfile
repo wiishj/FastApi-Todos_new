@@ -8,10 +8,7 @@ RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 WORKDIR /app
 
 # 파일 복사
-COPY main.py /app/main.py
-COPY requirements.txt /app/requirements.txt
-COPY templates /app/templates
-COPY todo.js /app/todo.js
+COPY . .
 
 # 애플리케이션 파일의 소유권을 비루트 사용자에게 변경
 RUN chown -R appuser:appgroup /app
