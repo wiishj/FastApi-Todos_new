@@ -73,6 +73,7 @@
         border-radius: 10px;
         box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
       }
+
       li span {
         color: #473f3e;
       }
@@ -84,7 +85,6 @@
         margin-top: 0.5rem;
       }
 
-      /* 카테고리 색상 */
       .운동 {
         background-color: #ffa98a;
       }
@@ -106,8 +106,41 @@
         margin-top: 0.3rem;
         color: #666;
       }
-      .dragging-over{
+
+      .dragging-over {
         background-color: #e0e0e0;
+      }
+
+      /* 수정 모달 스타일 */
+      #edit-modal {
+        display: none;
+        position: fixed;
+        top: 10%;
+        left: 50%;
+        transform: translateX(-50%);
+        background:#f1ecea;
+        padding: 2rem;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+      }
+
+      #edit-modal h2 {
+        margin-top: 0;
+      }
+
+      #edit-modal form {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+      }
+
+      #edit-modal button {
+        padding: 0.5rem;
+        border-radius: 5px;
+        cursor: pointer;
+        border: none;
       }
     </style>
   </head>
@@ -147,6 +180,25 @@
       </div>
     </div>
 
+    <!-- ✅ 수정 모달 폼 -->
+    <div id="edit-modal">
+      <h2>To-Do 수정</h2>
+      <form id="edit-form">
+        <input type="hidden" id="edit-id" />
+        <input type="text" id="edit-title" placeholder="제목" required />
+        <input type="text" id="edit-description" placeholder="설명" required />
+        <input type="date" id="edit-deadline" />
+        <select id="edit-category" required>
+          <option value="운동">운동</option>
+          <option value="약속">약속</option>
+          <option value="공부">공부</option>
+          <option value="일정">일정</option>
+        </select>
+        <button type="submit">수정 완료</button>
+        <button type="button" onclick="closeEditForm()">취소</button>
+      </form>
+    </div>
+
     <script>
       async function fetchTodos() {
         const response = await fetch("/todos");
@@ -160,8 +212,8 @@
         todos.forEach((todo) => {
           const li = document.createElement("li");
           li.className = `${todo.category}`;
-          li.setAttribute("draggable", true); // 드래그 가능
-          li.setAttribute("ondragstart", `drag(event, ${todo.id})`); // 드래그 시작 이벤트
+          li.setAttribute("draggable", true);
+          li.setAttribute("ondragstart", `drag(event, ${todo.id})`);
 
           const deadlineDate = todo.deadline
             ? new Date(todo.deadline)
@@ -195,30 +247,22 @@
       function allowDrop(event) {
         event.preventDefault();
         const section = event.target.closest(".todo-section");
-
-        // 드래그 중인 리스트 전체 강조
-        if (section) {
-          section.classList.add("dragging-over");
-        }
+        if (section) section.classList.add("dragging-over");
       }
 
       function resetDropStyle(event) {
         const section = event.target.closest(".todo-section");
-
-        // 강조 색상 초기화
-        if (section) {
-          section.classList.remove("dragging-over");
-        }
+        if (section) section.classList.remove("dragging-over");
       }
 
       async function drop(event, completed) {
         event.preventDefault();
-        const target = event.target.closest("ul"); // 드롭 가능한 영역 확인
+        const target = event.target.closest("ul");
         if (!target) return;
         const todoId = event.dataTransfer.getData("todoId");
 
         await fetch(`/todos/${todoId}/toggle`, { method: "PATCH" });
-        fetchTodos(); //list load
+        fetchTodos();
       }
 
       document
@@ -229,7 +273,6 @@
           const description = document.getElementById("description").value;
           const deadlineInput = document.getElementById("deadline").value;
           const category = document.getElementById("category").value;
-
           const deadline = deadlineInput ? deadlineInput.split("T")[0] : null;
 
           await fetch("/todos", {
@@ -253,42 +296,47 @@
           res.json()
         );
 
-        const newCategory = prompt(
-          "Edit Category (운동, 약속, 공부, 일정):",
-          existingTodo.category
-        );
-        const newTitle = prompt("Edit Title:", existingTodo.title);
-        const newDescription = prompt(
-          "Edit Description:",
-          existingTodo.description
-        );
-        let newDeadline = prompt(
-          "Edit Deadline (YYYY-MM-DD):",
-          existingTodo.deadline
-        );
+        document.getElementById("edit-id").value = existingTodo.id;
+        document.getElementById("edit-title").value = existingTodo.title;
+        document.getElementById("edit-description").value = existingTodo.description;
+        document.getElementById("edit-deadline").value = existingTodo.deadline?.split("T")[0] || "";
+        document.getElementById("edit-category").value = existingTodo.category;
 
-        if (newDeadline && newDeadline.includes("T")) {
-          newDeadline = newDeadline.split("T")[0];
-        }
+        document.getElementById("edit-modal").style.display = "block";
+      }
+
+      document.getElementById("edit-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const id = document.getElementById("edit-id").value;
+        const title = document.getElementById("edit-title").value;
+        const description = document.getElementById("edit-description").value;
+        const deadline = document.getElementById("edit-deadline").value;
+        const category = document.getElementById("edit-category").value;
 
         const response = await fetch(`/todos/${id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             id,
-            title: newTitle || existingTodo.title,
-            description: newDescription || existingTodo.description,
-            deadline: newDeadline || existingTodo.deadline,
-            category: newCategory || existingTodo.category,
-            completed: existingTodo.completed,
+            title,
+            description,
+            deadline,
+            category,
+            completed: false,
           }),
         });
 
         if (response.ok) {
+          document.getElementById("edit-modal").style.display = "none";
           fetchTodos();
         } else {
           console.error("수정 실패:", await response.text());
         }
+      });
+
+      function closeEditForm() {
+        document.getElementById("edit-modal").style.display = "none";
       }
 
       async function deleteTodo(id) {
