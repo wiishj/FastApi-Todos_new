@@ -21,7 +21,7 @@ Instrumentator().instrument(app).expose(app, endpoint="/metrics")
 
 loki_logs_handler = LokiQueueHandler(
     Queue(-1),
-    url=getenv("http://15.164.38.139:3100/loki/api/v1/push"),
+    url=getenv("LOKI_ENDPOINT"),
     tags={"application": "fastapi"},
     version="1",
 )
