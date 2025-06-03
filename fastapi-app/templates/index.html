@@ -6,7 +6,7 @@
     <style>
       body {
         font-family: "Noto Sans KR", sans-serif;
-        max-width: 800px;
+        max-width: 1000px;
         margin: 2rem auto;
         padding: 1rem;
         background-color: #f1ecea;
@@ -19,7 +19,7 @@
 
       #toggle-form-button {
         display: block;
-        margin: 0 auto 1rem auto;
+        margin: 0 auto 1rem;
         padding: 0.6rem 1rem;
         border: none;
         border-radius: 8px;
@@ -57,47 +57,45 @@
         cursor: pointer;
       }
 
-      .actions button {
-        background-color: transparent;
-        border: none;
-        font-size: 1.3rem;
-        cursor: pointer;
-      }
-
       .todo-container {
-        display: flex;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
         gap: 2rem;
       }
 
-      .todo-section {
-        flex: 1;
-        background-color: #f1ecea;
-        padding: 1rem;
-        border-radius: 10px;
-      }
-
-      ul {
-        list-style: none;
-        padding: 0;
-        min-height: 50px;
-      }
-
-      li {
-        margin-bottom: 1rem;
+      .calendar-section {
+        background-color: #ffffff;
         padding: 1rem;
         border-radius: 10px;
         box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
       }
 
-      li span {
-        color: #473f3e;
+      .calendar {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 1rem;
+        text-align: center;
       }
 
-      .actions {
-        display: flex;
-        justify-content: center;
-        gap: 5rem;
-        margin-top: 0.5rem;
+      .calendar div {
+        position: relative;
+        padding: 8px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        width: 40px;
+        height: 40px;
+      }
+
+      .calendar div .indicator {
+        position: absolute;
+        bottom: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
       }
 
       .운동 {
@@ -116,24 +114,66 @@
         background-color: #dbe098;
       }
 
+      .todo-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .todo-list-container {
+        flex: 1;
+        background-color: #ffffff;
+        padding: 1rem;
+        border-radius: 10px;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        overflow-y: auto;
+        max-height: 300px;
+      }
+
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      li {
+        margin-bottom: 1rem;
+        padding: 1rem;
+        border-radius: 10px;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+      }
+
+      li span {
+        color: #473f3e;
+      }
+
       small {
         display: block;
         margin-top: 0.3rem;
         color: #666;
       }
 
-      .dragging-over {
-        background-color: #e0e0e0;
+      .actions {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 0.5rem;
+      }
+
+      .actions button {
+        border: none;
+        background: #eee;
+        padding: 0.3rem 0.6rem;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 0.9rem;
       }
     </style>
   </head>
   <body>
     <h1>To-Do List</h1>
 
-    <!-- 할 일 추가/수정 버튼 -->
     <button id="toggle-form-button" class="add">+ 할 일 추가</button>
 
-    <!-- 공용 폼 컨테이너 -->
     <div id="form-container">
       <form id="todo-form">
         <input type="hidden" id="todo-id" />
@@ -152,17 +192,26 @@
     </div>
 
     <div class="todo-container">
-      <div class="todo-section">
-        <h2>📌 미완료</h2>
-        <ul id="pending-todo-list" ondragover="allowDrop(event)" ondragleave="resetDropStyle(event)" ondrop="drop(event, false)"></ul>
+      <div class="calendar-section">
+        <div id="calendar" class="calendar"></div>
       </div>
       <div class="todo-section">
-        <h2>✅ 완료</h2>
-        <ul id="completed-todo-list" ondragover="allowDrop(event)" ondragleave="resetDropStyle(event)" ondrop="drop(event, true)"></ul>
+        <div class="todo-list-container">
+          <h5>📌 미완료</h5>
+          <ul id="pending-todo-list"></ul>
+        </div>
+        <div class="todo-list-container">
+          <h5>✅ 완료</h5>
+          <ul id="completed-todo-list"></ul>
+        </div>
       </div>
     </div>
 
     <script>
+      const today = new Date();
+      const month = today.getMonth();
+      const year = today.getFullYear();
+
       document.getElementById("toggle-form-button").addEventListener("click", () => {
         document.getElementById("form-container").style.display = "block";
         document.getElementById("todo-form").reset();
@@ -174,6 +223,31 @@
         document.getElementById("todo-form").reset();
       }
 
+      function editTodo(todo) {
+        document.getElementById("form-container").style.display = "block";
+        document.getElementById("todo-id").value = todo.id;
+        document.getElementById("title").value = todo.title;
+        document.getElementById("description").value = todo.description;
+        document.getElementById("deadline").value = todo.deadline || "";
+        document.getElementById("category").value = todo.category;
+      }
+
+      async function toggleCompleted(todo) {
+        await fetch(`/todos/${todo.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...todo, completed: !todo.completed }),
+        });
+        fetchTodos();
+      }
+
+      async function deleteTodo(id) {
+        await fetch(`/todos/${id}`, {
+          method: "DELETE",
+        });
+        fetchTodos();
+      }
+
       async function fetchTodos() {
         const response = await fetch("/todos");
         const todos = await response.json();
@@ -183,50 +257,73 @@
         pendingList.innerHTML = "";
         completedList.innerHTML = "";
 
+        renderCalendar(year, month);
+
+        const processedDates = new Set();
+
         todos.forEach((todo) => {
           const li = document.createElement("li");
           li.className = `${todo.category}`;
-          li.setAttribute("draggable", true);
-          li.setAttribute("ondragstart", `drag(event, ${todo.id})`);
 
           const deadlineDate = todo.deadline ? new Date(todo.deadline) : null;
           const deadlineText = deadlineDate && !isNaN(deadlineDate) ? `🕒 마감: ${deadlineDate.toLocaleDateString()}` : "📌 마감기한 없음";
 
           li.innerHTML = `
-            <span>${todo.category}</span>
             <span>${todo.title}: ${todo.description}</span>
             <small>${deadlineText}</small>
             <div class="actions">
-              <button onclick="toggleCompleted(${todo.id})">${todo.completed ? "⏪" : "✅"}</button>
-              <button onclick="editTodo(${todo.id})">✏️</button>
-              <button onclick="deleteTodo(${todo.id})">❌</button>
+              <button onclick='editTodo(${JSON.stringify(todo)})'>수정</button>
+              <button onclick='toggleCompleted(${JSON.stringify(todo)})'>${todo.completed ? "미완료" : "완료"}</button>
+              <button onclick='deleteTodo(${todo.id})'>삭제</button>
             </div>
           `;
 
           (todo.completed ? completedList : pendingList).appendChild(li);
+
+          if (deadlineDate && deadlineDate.getMonth() === month && deadlineDate.getFullYear() === year) {
+            const day = deadlineDate.getDate();
+            if (!processedDates.has(day)) {
+              const dayCell = document.querySelector(`#calendar div[data-day="${day}"]`);
+              if (dayCell) {
+                const indicator = document.createElement("div");
+                indicator.classList.add("indicator");
+                indicator.style.backgroundColor = getCategoryColor(todo.category);
+                dayCell.appendChild(indicator);
+              }
+              processedDates.add(day);
+            }
+          }
         });
       }
 
-      function drag(event, id) {
-        event.dataTransfer.setData("todoId", id);
+      function getCategoryColor(category) {
+        switch (category) {
+          case "운동": return "#ffa98a";
+          case "약속": return "#ffcc80";
+          case "공부": return "#abcdde";
+          case "일정": return "#dbe098";
+          default: return "#cccccc";
+        }
       }
 
-      function allowDrop(event) {
-        event.preventDefault();
-        const section = event.target.closest(".todo-section");
-        if (section) section.classList.add("dragging-over");
-      }
+      function renderCalendar(year, month) {
+        const calendar = document.getElementById("calendar");
+        calendar.innerHTML = "";
 
-      function resetDropStyle(event) {
-        const section = event.target.closest(".todo-section");
-        if (section) section.classList.remove("dragging-over");
-      }
+        const firstDay = new Date(year, month, 1).getDay();
+        const lastDate = new Date(year, month + 1, 0).getDate();
 
-      async function drop(event, completed) {
-        event.preventDefault();
-        const todoId = event.dataTransfer.getData("todoId");
-        await fetch(`/todos/${todoId}/toggle`, { method: "PATCH" });
-        fetchTodos();
+        for (let i = 0; i < firstDay; i++) {
+          const emptyCell = document.createElement("div");
+          calendar.appendChild(emptyCell);
+        }
+
+        for (let day = 1; day <= lastDate; day++) {
+          const dayCell = document.createElement("div");
+          dayCell.setAttribute("data-day", day);
+          dayCell.textContent = day;
+          calendar.appendChild(dayCell);
+        }
       }
 
       document.getElementById("todo-form").addEventListener("submit", async (event) => {
@@ -237,7 +334,7 @@
         const description = document.getElementById("description").value;
         const deadlineInput = document.getElementById("deadline").value;
         const category = document.getElementById("category").value;
-        const deadline = deadlineInput ? deadlineInput.split("T")[0] : null;
+        const deadline = deadlineInput || null;
 
         const method = id ? "PUT" : "POST";
         const url = id ? `/todos/${id}` : "/todos";
@@ -259,28 +356,7 @@
         fetchTodos();
       });
 
-      async function editTodo(id) {
-        const todo = await fetch(`/todos/${id}`).then((res) => res.json());
-
-        document.getElementById("todo-id").value = todo.id;
-        document.getElementById("title").value = todo.title;
-        document.getElementById("description").value = todo.description;
-        document.getElementById("deadline").value = todo.deadline?.split("T")[0] || "";
-        document.getElementById("category").value = todo.category;
-
-        document.getElementById("form-container").style.display = "block";
-      }
-
-      async function deleteTodo(id) {
-        await fetch(`/todos/${id}`, { method: "DELETE" });
-        fetchTodos();
-      }
-
-      async function toggleCompleted(id) {
-        await fetch(`/todos/${id}/toggle`, { method: "PATCH" });
-        fetchTodos();
-      }
-
+      renderCalendar(year, month);
       fetchTodos();
     </script>
   </body>
